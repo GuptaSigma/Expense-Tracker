@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block title %}AI Investment Coach{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-8 px-4">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/investment_coach.css') }}">
+    <!-- Header Section -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <div class="text-center mb-6">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 mb-4 animate-pulse">
+                <i class="bi bi-robot text-4xl text-slate-900"></i>
+            </div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-indigo-500 bg-clip-text text-transparent mb-2">
+                AI Investment Coach
+            </h1>
+            <p class="text-slate-700 text-lg">Personalized wealth-building strategies powered by AI</p>
+        </div>
+    </div>
+
+    <!-- Financial Overview Stats -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Monthly Income -->
+            <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-500/20 to-emerald-600/20 backdrop-blur-xl border border-green-500/30 p-6 hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-green-500/20">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-green-400 opacity-80 text-sm font-medium">Monthly Income</div>
+                        <i class="bi bi-cash-coin text-4xl text-green-400 opacity-60"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-slate-900 mb-1">₹{{ "%.0f"|format(monthly_income) }}</div>
+                    <div class="text-xs text-green-300/60">Total earnings this month</div>
+                </div>
+            </div>
+
+            <!-- Monthly Expense -->
+            <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-500/20 to-pink-600/20 backdrop-blur-xl border border-red-500/30 p-6 hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-red-500/20">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-red-400 opacity-80 text-sm font-medium">Monthly Expense</div>
+                        <i class="bi bi-graph-down text-4xl text-red-400 opacity-60"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-slate-900 mb-1">₹{{ "%.0f"|format(monthly_expense) }}</div>
+                    <div class="text-xs text-red-300/60">Total spending this month</div>
+                </div>
+            </div>
+
+            <!-- Available Balance -->
+            <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/20 to-cyan-600/20 backdrop-blur-xl border border-blue-500/30 p-6 hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/20">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-blue-400 opacity-80 text-sm font-medium">Available Balance</div>
+                        <i class="bi bi-wallet2 text-4xl text-blue-400 opacity-60"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-slate-900 mb-1">₹{{ "%.0f"|format(user_balance) }}</div>
+                    <div class="text-xs text-blue-300/60">Current account balance</div>
+                </div>
+            </div>
+
+            <!-- Savings Rate -->
+            <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/20 to-indigo-600/20 backdrop-blur-xl border border-purple-500/30 p-6 hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-purple-400 opacity-80 text-sm font-medium">Savings Rate</div>
+                        <i class="bi bi-graph-up text-4xl text-purple-400 opacity-60"></i>
+                    </div>
+                    <div class="text-3xl font-bold text-slate-900 mb-1">{{ ((monthly_income - monthly_expense) / monthly_income * 100)|round|int }}%</div>
+                    <div class="text-xs text-purple-300/60">Of income saved monthly</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Coaching Section -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Coaching Content -->
+            <div class="lg:col-span-2">
+                <div class="rounded-2xl bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 backdrop-blur-xl border border-indigo-500/30 p-8 hover:shadow-2xl hover:shadow-indigo-500/20 transition-all duration-300">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                            <i class="bi bi-lightbulb-fill text-2xl text-slate-900"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-900">Your Personalized Wealth Strategy</h2>
+                    </div>
+                    <div class="coaching-content text-slate-700 leading-relaxed">
+                        {{ coaching|safe }}
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-indigo-500/30">
+                        <div class="flex items-center gap-2 text-sm text-indigo-400">
+                            <i class="bi bi-cpu"></i>
+                            <span>Generated by AI • Personalized for you</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market Watch Sidebar -->
+            <div class="lg:col-span-1 space-y-4">
+                <div class="rounded-2xl bg-gradient-to-br from-white to-slate-50 backdrop-blur-xl border border-slate-200/50 p-6">
+                    <div class="flex items-center gap-2 mb-6">
+                        <i class="bi bi-graph-up-arrow text-2xl text-green-400"></i>
+                        <h3 class="text-xl font-bold text-slate-900">Live Market</h3>
+                    </div>
+                    
+                    <!-- Gold -->
+                    <div class="mb-6 p-4 rounded-xl bg-gradient-to-br from-yellow-500/20 to-amber-600/20 border border-yellow-500/30 hover:scale-105 transition-transform duration-300">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="bi bi-gem text-xl text-yellow-400"></i>
+                            <span class="text-yellow-300 font-medium">Gold (24K)</span>
+                        </div>
+                        <div class="text-2xl font-bold text-slate-900 mb-1">₹{{ "%.2f"|format(market_data.gold.gold_price_24k) }}/g</div>
+                        <div class="text-xs text-yellow-300/70">💡 Safe inflation hedge</div>
+                    </div>
+
+                    <!-- Bitcoin -->
+                    <div class="mb-6 p-4 rounded-xl bg-gradient-to-br from-orange-500/20 to-yellow-600/20 border border-orange-500/30 hover:scale-105 transition-transform duration-300">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="bi bi-currency-bitcoin text-xl text-orange-400"></i>
+                            <span class="text-orange-300 font-medium">Bitcoin</span>
+                        </div>
+                        <div class="text-2xl font-bold text-slate-900 mb-1">₹{{ "%.0f"|format(market_data.crypto.bitcoin.price) }}</div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-slate-700">24h Change:</span>
+                            {% if market_data.crypto.bitcoin.change_24h > 0 %}
+                                <span class="text-green-400 text-sm font-semibold flex items-center gap-1">
+                                    <i class="bi bi-arrow-up"></i> +{{ "%.2f"|format(market_data.crypto.bitcoin.change_24h) }}%
+                                </span>
+                            {% else %}
+                                <span class="text-red-400 text-sm font-semibold flex items-center gap-1">
+                                    <i class="bi bi-arrow-down"></i> {{ "%.2f"|format(market_data.crypto.bitcoin.change_24h) }}%
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Nifty 50 -->
+                    <div class="mb-6 p-4 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 border border-blue-500/30 hover:scale-105 transition-transform duration-300">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="bi bi-graph-up text-xl text-blue-400"></i>
+                            <span class="text-blue-300 font-medium">Nifty 50</span>
+                        </div>
+                        <div class="text-2xl font-bold text-slate-900 mb-1">{{ "%.0f"|format(market_data.indices.nifty_50.price) }}</div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-slate-700">5d Change:</span>
+                            {% if market_data.indices.nifty_50.change_5d > 0 %}
+                                <span class="text-green-400 text-sm font-semibold flex items-center gap-1">
+                                    <i class="bi bi-arrow-up"></i> +{{ "%.2f"|format(market_data.indices.nifty_50.change_5d) }}%
+                                </span>
+                            {% else %}
+                                <span class="text-red-400 text-sm font-semibold flex items-center gap-1">
+                                    <i class="bi bi-arrow-down"></i> {{ "%.2f"|format(market_data.indices.nifty_50.change_5d) }}%
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <a href="{{ url_for('main.market_watch') }}" class="block w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-slate-900 font-semibold text-center hover:scale-105 transition-transform duration-300">
+                        <i class="bi bi-arrow-right-circle"></i> View Full Market
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wealth Building Principles -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <div class="rounded-2xl bg-gradient-to-br from-white to-slate-50 backdrop-blur-xl border border-slate-200/50 p-8">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center">
+                    <i class="bi bi-lightbulb-fill text-2xl text-slate-900"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900">Wealth Building Principles</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Emergency Fund -->
+                <div class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-600/20 border border-emerald-500/30 p-6 hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/20">
+                    <div class="absolute top-0 right-0 text-6xl opacity-10 transform translate-x-4 -translate-y-2">🎯</div>
+                    <div class="relative z-10">
+                        <div class="text-4xl mb-3">🎯</div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-3">Emergency Fund</h3>
+                        <p class="text-sm text-slate-700 leading-relaxed">Build 6 months of expenses first. This is your financial safety net.</p>
+                    </div>
+                </div>
+
+                <!-- SIP Investing -->
+                <div class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 border border-blue-500/30 p-6 hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/20">
+                    <div class="absolute top-0 right-0 text-6xl opacity-10 transform translate-x-4 -translate-y-2">📈</div>
+                    <div class="relative z-10">
+                        <div class="text-4xl mb-3">📈</div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-3">SIP Investing</h3>
+                        <p class="text-sm text-slate-700 leading-relaxed">₹1,000-5,000/month in index funds. Best for rupee cost averaging.</p>
+                    </div>
+                </div>
+
+                <!-- Diversification -->
+                <div class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-600/20 border border-purple-500/30 p-6 hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/20">
+                    <div class="absolute top-0 right-0 text-6xl opacity-10 transform translate-x-4 -translate-y-2">🏆</div>
+                    <div class="relative z-10">
+                        <div class="text-4xl mb-3">🏆</div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-3">Diversification</h3>
+                        <p class="text-sm text-slate-700 leading-relaxed">60% Stocks, 20% Gold, 20% Bonds/Savings. Don't put all eggs in one basket.</p>
+                    </div>
+                </div>
+
+                <!-- Asset Growth -->
+                <div class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-600/20 border border-amber-500/30 p-6 hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-amber-500/20">
+                    <div class="absolute top-0 right-0 text-6xl opacity-10 transform translate-x-4 -translate-y-2">💰</div>
+                    <div class="relative z-10">
+                        <div class="text-4xl mb-3">💰</div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-3">Asset Growth</h3>
+                        <p class="text-sm text-slate-700 leading-relaxed">Invest your surplus. Time is your biggest wealth-building asset (compound interest).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Items -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <div class="rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur-xl border border-indigo-500/30 p-8">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                    <i class="bi bi-checklist text-2xl text-slate-900"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900">Your Next Steps</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a href="{{ url_for('main.add_income') }}" class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-green-600 to-emerald-700 p-6 hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-green-500/30">
+                    <div class="absolute inset-0 bg-gradient-to-br from-white/0 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div class="relative z-10 flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
+                            <i class="bi bi-plus-circle text-3xl text-slate-900"></i>
+                        </div>
+                        <div>
+                            <div class="text-lg font-bold text-slate-900 mb-1">Log Income</div>
+                            <div class="text-sm text-green-100/80">Add your earnings</div>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('main.dashboard') }}" class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 p-6 hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/30">
+                    <div class="absolute inset-0 bg-gradient-to-br from-white/0 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div class="relative z-10 flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
+                            <i class="bi bi-bar-chart text-3xl text-slate-900"></i>
+                        </div>
+                        <div>
+                            <div class="text-lg font-bold text-slate-900 mb-1">View Dashboard</div>
+                            <div class="text-sm text-blue-100/80">Check your stats</div>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('main.market_watch') }}" class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-600 to-pink-700 p-6 hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/30">
+                    <div class="absolute inset-0 bg-gradient-to-br from-white/0 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div class="relative z-10 flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
+                            <i class="bi bi-graph-up text-3xl text-slate-900"></i>
+                        </div>
+                        <div>
+                            <div class="text-lg font-bold text-slate-900 mb-1">Watch Market</div>
+                            <div class="text-sm text-purple-100/80">Live market data</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

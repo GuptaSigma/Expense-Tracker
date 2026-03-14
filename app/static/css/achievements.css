@@ -1,0 +1,60 @@
+/* Achievements Page Styling */
+body {
+    background-color: #f8fafc;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.achievement-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    border-left: 4px solid #2563eb;
+}
+
+.achievement-card:hover {
+    box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+}
+
+.achievement-title {
+    color: #1e293b;
+    font-weight: 700;
+    font-size: 1.125rem;
+    margin-bottom: 0.5rem;
+}
+
+.achievement-description {
+    color: #64748b;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.achievement-progress {
+    background: #e2e8f0;
+    height: 8px;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 1rem;
+}
+
+.achievement-progress-bar {
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+    height: 100%;
+    border-radius: 10px;
+}
+
+.achievement-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #2563eb;
+}

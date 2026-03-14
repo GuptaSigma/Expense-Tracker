@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Stock Search - Wealth Tracker{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-8 px-4">
+   <!-- Header Section -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 mb-4">
+                <i class="bi bi-search text-4xl text-slate-900"></i>
+            </div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
+                Stock Market Search
+            </h1>
+            <p class="text-slate-700 text-lg">Discover and track Indian stocks in real-time</p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="max-w-3xl mx-auto mb-8">
+            <div class="relative group">
+                <div class="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl opacity-20 blur group-hover:opacity-30 transition-opacity duration-300"></div>
+                <div class="relative rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-xl border border-slate-200/50 p-6">
+                    <div class="flex gap-3">
+                        <div class="flex-1 relative">
+                            <i class="bi bi-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-700 text-xl"></i>
+                            <input type="text" 
+                                   class="w-full bg-white/50 border border-slate-200/50 rounded-xl pl-12 pr-4 py-4 text-slate-900 placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300" 
+                                   id="stockSearch"
+                                   data-search-url="{{ url_for('main.stock_search') }}"
+                                   placeholder="Search by symbol (TCS, INFY, MRF) or company name..."
+                                   value="{{ query }}">
+                        </div>
+                        <button onclick="searchStocks()" class="px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-slate-900 font-semibold hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/50">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                    <p class="text-slate-700 text-sm mt-4 flex items-center gap-2">
+                        <i class="bi bi-lightbulb"></i> Try: TCS, INFY, MRF, RELIANCE, HDFC, ICICIBANK
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sector Filter -->
+        <div class="max-w-7xl mx-auto mb-8">
+            <div class="rounded-2xl bg-gradient-to-br from-white to-slate-50 backdrop-blur-xl border border-slate-200/50 p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <i class="bi bi-funnel text-xl text-indigo-400"></i>
+                    <h3 class="text-lg font-semibold text-slate-900">Filter by Sector</h3>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="{{ url_for('main.stock_search') }}" 
+                       class="px-5 py-2.5 rounded-xl font-medium transition-all duration-300 {% if not sector_filter %}bg-gradient-to-r from-indigo-600 to-purple-600 text-slate-900 shadow-lg shadow-indigo-500/30{% else %}bg-slate-50/50 text-slate-700 hover:bg-gray-700/50 hover:text-slate-900 border border-slate-200/50{% endif %}">
+                        All Sectors
+                    </a>
+                    {% for sector in sectors %}
+                    <a href="{{ url_for('main.stock_search', sector=sector) }}" 
+                       class="px-5 py-2.5 rounded-xl font-medium transition-all duration-300 {% if sector_filter == sector %}bg-gradient-to-r from-indigo-600 to-purple-600 text-slate-900 shadow-lg shadow-indigo-500/30{% else %}bg-slate-50/50 text-slate-700 hover:bg-gray-700/50 hover:text-slate-900 border border-slate-200/50{% endif %}">
+                        {{ sector }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="max-w-7xl mx-auto">
+        {% if results %}
+            <!-- Results Header -->
+            <div class="mb-6 flex items-center gap-3">
+                <i class="bi bi-list-check text-2xl text-indigo-400"></i>
+                <h2 class="text-2xl font-bold text-slate-900">Found {{ results|length }} stock(s)</h2>
+            </div>
+
+            <!-- Stock Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {% for stock in results %}
+                <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-white to-slate-50 backdrop-blur-xl border border-slate-200/50 p-6 hover:scale-[1.02] transition-all duration-300 hover:shadow-2xl hover:border-indigo-500/50">
+                    <!-- Stock Header -->
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold text-slate-900 mb-1">{{ stock.symbol }}</h3>
+                            <p class="text-slate-700 text-sm mb-2">{{ stock.name }}</p>
+                            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                                {{ stock.sector }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Price Section -->
+                    <div class="mb-4 pb-4 border-b border-slate-200/50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm text-slate-700 mb-1">Current Price</div>
+                                <div class="text-2xl font-bold text-slate-900">₹{{ "%.2f"|format(stock.current_price) }}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm text-slate-700 mb-1">Today Change</div>
+                                {% if stock.change_24h > 0 %}
+                                    <div class="text-xl font-bold text-green-400 flex items-center gap-1 justify-end">
+                                        <i class="bi bi-arrow-up"></i> {{ "%.2f"|format(stock.change_24h) }}%
+                                    </div>
+                                {% else %}
+                                    <div class="text-xl font-bold text-red-400 flex items-center gap-1 justify-end">
+                                        <i class="bi bi-arrow-down"></i> {{ "%.2f"|format(stock.change_24h) }}%
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Button -->
+                    {% if stock.symbol in watchlist_symbols %}
+                        <form method="POST" action="{{ url_for('main.remove_from_watchlist', symbol=stock.symbol) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-red-600 to-pink-600 text-slate-900 font-semibold hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/30 flex items-center justify-center gap-2">
+                                <i class="bi bi-star-fill"></i> Remove from Watchlist
+                            </button>
+                        </form>
+                    {% else %}
+                        <form method="POST" action="{{ url_for('main.add_to_watchlist', symbol=stock.symbol) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-slate-900 font-semibold hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/30 flex items-center justify-center gap-2">
+                                <i class="bi bi-star"></i> Add to Watchlist
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            <!-- View Watchlist Button -->
+            <div class="text-center">
+                <a href="{{ url_for('main.watchlist') }}" class="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-yellow-600 to-orange-600 text-slate-900 font-semibold text-lg hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-yellow-500/30">
+                    <i class="bi bi-star-fill"></i> View My Watchlist
+                </a>
+            </div>
+
+        {% elif query or sector_filter %}
+            <!-- No Results Found -->
+            <div class="max-w-2xl mx-auto">
+                <div class="rounded-2xl bg-gradient-to-br from-white to-slate-50 backdrop-blur-xl border border-slate-200/50 p-12 text-center">
+                    <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-blue-500/20 to-indigo-600/20 border border-blue-500/30 mb-6">
+                        <i class="bi bi-search text-5xl text-blue-400"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-slate-900 mb-4">No stocks found</h2>
+                    <p class="text-slate-700 mb-2 text-lg">
+                        {% if query %}
+                            for "{{ query }}"
+                        {% endif %}
+                        {% if sector_filter %}
+                            in {{ sector_filter }} sector
+                        {% endif %}
+                    </p>
+                    <p class="text-slate-600 mb-6">Try searching with different keywords or browse by sector</p>
+                    <a href="{{ url_for('main.stock_search') }}" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-slate-900 font-semibold hover:scale-105 transition-all duration-300">
+                        <i class="bi bi-arrow-counterclockwise"></i> Clear Search
+                    </a>
+                </div>
+            </div>
+
+        {% else %}
+            <!-- Empty State with Popular Stocks -->
+            <div class="max-w-4xl mx-auto">
+                <div class="rounded-2xl bg-gradient-to-br from-white to-slate-50 backdrop-blur-xl border border-slate-200/50 p-12">
+                    <div class="text-center mb-8">
+                        <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-600/20 border border-indigo-500/30 mb-6">
+                            <i class="bi bi-graph-up-arrow text-5xl text-indigo-400"></i>
+                        </div>
+                        <h2 class="text-3xl font-bold text-slate-900 mb-3">Start Your Stock Search</h2>
+                        <p class="text-slate-700 text-lg mb-8">Search for Indian stocks, filter by sector, and add them to your watchlist</p>
+                    </div>
+
+                    <!-- Popular Stocks -->
+                    <div>
+                        <div class="flex items-center gap-3 mb-6">
+                            <i class="bi bi-fire text-2xl text-orange-400"></i>
+                            <h3 class="text-xl font-semibold text-slate-900">Popular Stocks</h3>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            {% set popular = ['TCS', 'INFY', 'RELIANCE', 'HDFC', 'ICICIBANK', 'MRF', 'MARUTI', 'SUNPHARMA'] %}
+                            {% for symbol in popular %}
+                            <form method="GET" action="{{ url_for('main.stock_search') }}">
+                                <input type="hidden" name="q" value="{{ symbol }}">
+                                <button type="submit" class="w-full py-3 px-4 rounded-xl bg-gradient-to-br from-gray-700/50 to-gray-800/50 border border-gray-600/50 text-slate-900 font-semibold hover:scale-105 hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300">
+                                    {{ symbol }}
+                                </button>
+                            </form>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/stock_search.js') }}"></script>
+{% endblock %}
