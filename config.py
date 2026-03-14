@@ -54,6 +54,8 @@ class Config:
         os.getenv('NEON_DATABASE_URL'),
         os.getenv('POSTGRES_URL'),
         os.getenv('DATABASE_URL'),
+        os.getenv('VALUE'),
+        os.getenv('Value'),
     ]
     _db_url = next(
         (

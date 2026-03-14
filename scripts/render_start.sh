@@ -9,13 +9,34 @@
 
 set -e
 
-# ── 1. Validate required environment variables ──────────────────────────────
-if [ -z "$DATABASE_URL" ]; then
+# ── 1. Resolve and validate database URL ────────────────────────────────────
+RAW_DB_URL="${DATABASE_URL:-${NEON_DATABASE_URL:-${POSTGRES_URL:-${VALUE:-${Value:-}}}}}"
+
+if [ -z "$RAW_DB_URL" ]; then
     echo "ERROR: DATABASE_URL is not set."
     echo "Set it to your Neon / PostgreSQL connection string in the Render environment variables."
     echo "Example: postgresql://user:password@host/dbname?sslmode=require"
     exit 1
 fi
+
+# Recover from accidental UI entry like: "Value =postgresql://..."
+DB_URL="${RAW_DB_URL#*=}"
+
+case "$DB_URL" in
+    *postgresql://*)
+        DB_URL="postgresql://${DB_URL#*postgresql://}"
+        ;;
+    *postgres://*)
+        DB_URL="postgres://${DB_URL#*postgres://}"
+        ;;
+    *mysql://*|*mysql+pymysql://*)
+        echo "ERROR: MySQL URL detected in env vars, but this app expects Neon/PostgreSQL."
+        echo "Fix DATABASE_URL to your Neon Postgres connection string."
+        exit 1
+        ;;
+esac
+
+export DATABASE_URL="$DB_URL"
 
 # ── 2. Optionally run Flask-Migrate migrations ───────────────────────────────
 # Tell the Flask CLI which application to load.
