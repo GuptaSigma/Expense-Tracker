@@ -38,19 +38,50 @@ esac
 
 export DATABASE_URL="$DB_URL"
 
+bootstrap_db() {
+    echo "Bootstrapping DB tables with db.create_all()..."
+    python - <<'PY'
+from app import db
+from wsgi import app
+import app.models  # Ensure model metadata is registered before create_all
+
+with app.app_context():
+    db.create_all()
+
+print("Database bootstrap complete.")
+PY
+}
+
+has_migration_scripts() {
+    [ -f "migrations/env.py" ] && [ -d "migrations/versions" ] && find migrations/versions -maxdepth 1 -type f -name "*.py" | grep -q .
+}
+
 # ── 2. Optionally run Flask-Migrate migrations ───────────────────────────────
 # Tell the Flask CLI which application to load.
 export FLASK_APP="${FLASK_APP:-wsgi}"
 
 case "${RUN_MIGRATIONS:-0}" in
     1|true|yes|on)
-        echo "RUN_MIGRATIONS is enabled – running: flask db upgrade"
-        flask db upgrade
-        echo "Migrations complete."
+        if has_migration_scripts; then
+            echo "RUN_MIGRATIONS is enabled - running: flask db upgrade"
+            flask db upgrade
+            echo "Migrations complete."
+        else
+            echo "RUN_MIGRATIONS is enabled, but migration scripts are missing."
+            bootstrap_db
+        fi
         ;;
     *)
         echo "RUN_MIGRATIONS is not enabled; skipping flask db upgrade."
         echo "Set RUN_MIGRATIONS=1 to run migrations automatically on startup."
+        case "${BOOTSTRAP_DB_ON_START:-1}" in
+            1|true|yes|on)
+                bootstrap_db
+                ;;
+            *)
+                echo "BOOTSTRAP_DB_ON_START is disabled; not creating tables automatically."
+                ;;
+        esac
         ;;
 esac
 
