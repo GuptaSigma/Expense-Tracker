@@ -28,20 +28,26 @@ def _as_bool(name, default):
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-change-me')
 
-    _db_url = os.getenv('DATABASE_URL')
+    _db_url = (
+        os.getenv('DATABASE_URL')
+        or os.getenv('NEON_DATABASE_URL')
+        or os.getenv('POSTGRES_URL')
+    )
     if not _db_url:
         raise RuntimeError(
-            "DATABASE_URL environment variable is not set. "
-            "Set it to a PostgreSQL connection string, e.g. "
-            "postgresql://user:password@host/dbname"
+            'No PostgreSQL database URL found. Set DATABASE_URL (preferred), '
+            'or NEON_DATABASE_URL, or POSTGRES_URL.'
         )
-    # Normalize driver prefixes so SQLAlchemy picks the right dialect.
-    if _db_url.startswith('postgresql://'):
-        _db_url = _db_url.replace('postgresql://', 'postgresql+psycopg2://', 1)
-    elif _db_url.startswith('postgres://'):
+
+    if _db_url.startswith('postgres://'):
         _db_url = _db_url.replace('postgres://', 'postgresql+psycopg2://', 1)
-    elif _db_url.startswith('mysql://'):
-        _db_url = _db_url.replace('mysql://', 'mysql+pymysql://', 1)
+    elif _db_url.startswith('postgresql://'):
+        _db_url = _db_url.replace('postgresql://', 'postgresql+psycopg2://', 1)
+    elif _db_url.startswith('mysql://') or _db_url.startswith('mysql+pymysql://'):
+        raise RuntimeError(
+            'MySQL URL detected, but this app is configured for Neon PostgreSQL. '
+            'Update DATABASE_URL to your Neon Postgres connection string.'
+        )
     SQLALCHEMY_DATABASE_URI = _db_url
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
