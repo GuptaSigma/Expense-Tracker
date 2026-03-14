@@ -25,6 +25,28 @@ def _as_bool(name, default):
     return value.strip().lower() in {'1', 'true', 'yes', 'on'}
 
 
+def _normalize_db_url(value):
+    if not value:
+        return None
+
+    cleaned = value.strip().strip('"').strip("'")
+    lowered = cleaned.lower()
+
+    # Recover from accidental prefixes like "Value =postgresql://...".
+    for prefix in ('postgresql://', 'postgres://', 'mysql+pymysql://', 'mysql://'):
+        idx = lowered.find(prefix)
+        if idx != -1:
+            cleaned = cleaned[idx:]
+            lowered = cleaned.lower()
+            break
+
+    if lowered.startswith('postgres://'):
+        return cleaned.replace('postgres://', 'postgresql+psycopg2://', 1)
+    if lowered.startswith('postgresql://'):
+        return cleaned.replace('postgresql://', 'postgresql+psycopg2://', 1)
+    return cleaned
+
+
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-change-me')
 
@@ -35,16 +57,16 @@ class Config:
     ]
     _db_url = next(
         (
-            value.strip().strip('"').strip("'")
+            _normalize_db_url(value)
             for value in _db_candidates
-            if value and value.strip().lower().startswith(('postgres://', 'postgresql://'))
+            if value and _normalize_db_url(value).lower().startswith('postgresql+psycopg2://')
         ),
         None,
     )
     if not _db_url:
         _db_url = next(
             (
-                value.strip().strip('"').strip("'")
+                _normalize_db_url(value)
                 for value in _db_candidates
                 if value and value.strip()
             ),
@@ -56,11 +78,7 @@ class Config:
             'or NEON_DATABASE_URL, or POSTGRES_URL.'
         )
 
-    if _db_url.startswith('postgres://'):
-        _db_url = _db_url.replace('postgres://', 'postgresql+psycopg2://', 1)
-    elif _db_url.startswith('postgresql://'):
-        _db_url = _db_url.replace('postgresql://', 'postgresql+psycopg2://', 1)
-    elif _db_url.startswith('mysql://') or _db_url.startswith('mysql+pymysql://'):
+    if _db_url.startswith('mysql://') or _db_url.startswith('mysql+pymysql://'):
         raise RuntimeError(
             'MySQL URL detected, but this app is configured for Neon PostgreSQL. '
             'Update DATABASE_URL to your Neon Postgres connection string.'
