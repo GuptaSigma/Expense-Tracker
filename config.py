@@ -28,11 +28,28 @@ def _as_bool(name, default):
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-change-me')
 
-    _db_url = (
-        os.getenv('DATABASE_URL')
-        or os.getenv('NEON_DATABASE_URL')
-        or os.getenv('POSTGRES_URL')
+    _db_candidates = [
+        os.getenv('NEON_DATABASE_URL'),
+        os.getenv('POSTGRES_URL'),
+        os.getenv('DATABASE_URL'),
+    ]
+    _db_url = next(
+        (
+            value.strip().strip('"').strip("'")
+            for value in _db_candidates
+            if value and value.strip().lower().startswith(('postgres://', 'postgresql://'))
+        ),
+        None,
     )
+    if not _db_url:
+        _db_url = next(
+            (
+                value.strip().strip('"').strip("'")
+                for value in _db_candidates
+                if value and value.strip()
+            ),
+            None,
+        )
     if not _db_url:
         raise RuntimeError(
             'No PostgreSQL database URL found. Set DATABASE_URL (preferred), '
