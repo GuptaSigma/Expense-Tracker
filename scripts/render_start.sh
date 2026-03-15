@@ -41,9 +41,8 @@ export DATABASE_URL="$DB_URL"
 bootstrap_db() {
     echo "Bootstrapping DB tables with db.create_all()..."
     python - <<'PY'
-from app import db
+from app import db, models as _models  # import models without rebinding 'app' name
 from wsgi import app
-import app.models  # Ensure model metadata is registered before create_all
 
 with app.app_context():
     db.create_all()
