@@ -15,7 +15,7 @@ requests==2.31.0
 yfinance==0.2.32
 google-generativeai==0.3.0
 python-dotenv==1.0.0
-tensorflow==2.14.0
+tensorflow-cpu==2.14.0
 statsmodels==0.14.0
 scipy==1.11.4
 gunicorn==23.0.0
