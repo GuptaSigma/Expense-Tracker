@@ -9,8 +9,10 @@ from app.gemini_chatbot import GeminiChatbot
 from app.openrouter_advisor import OpenRouterAdvisor
 from flask import current_app
 from datetime import datetime, timedelta
+from app import limiter
 import json
 import logging
+
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +102,7 @@ def get_openrouter_advisor():
     return get_openrouter_advisor.instance
 
 @main.route('/')
+@limiter.limit("1000 per minute")
 def index():
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
