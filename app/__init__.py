@@ -27,6 +27,7 @@ def create_app():
     migrate.init_app(app, db)
     csrf.init_app(app)
     limiter.init_app(app)
+    limiter.default_limit=["1500 per hour"]
     mail.init_app(app)
 
     login_manager.login_view = 'auth.login'
