@@ -1,5 +1,6 @@
 import os
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
@@ -20,6 +21,7 @@ mail = Mail()
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    app.wsgi_app = ProxyFix(app.wsgi_app,x_for=1,x_proto=1)
 
     # Initialize extensions
     db.init_app(app)
