@@ -13,7 +13,7 @@ db = SQLAlchemy()
 login_manager = LoginManager()
 migrate = Migrate()
 csrf = CSRFProtect()
-limiter = Limiter(key_func=get_remote_address, storage_uri=os.getenv('RATELIMIT_STORAGE_URI', 'memory://'))
+limiter = Limiter(key_func=get_remote_address, storage_uri=os.getenv('RATELIMIT_STORAGE_URI', 'memory://'),default_limits=["1500 per hour"])
 mail = Mail()
 
 
@@ -27,7 +27,6 @@ def create_app():
     migrate.init_app(app, db)
     csrf.init_app(app)
     limiter.init_app(app)
-    limiter.default_limit=["1500 per hour"]
     mail.init_app(app)
 
     login_manager.login_view = 'auth.login'
