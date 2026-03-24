@@ -1,0 +1,32 @@
+.coaching-content {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.coaching-content strong {
+    color: #a78bfa;
+    font-weight: 600;
+}
+
+.coaching-content h1,
+.coaching-content h2,
+.coaching-content h3 {
+    color: #c4b5fd;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

@@ -1,0 +1,1054 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+            <h1 class="text-4xl font-bold text-slate-900 mb-2">
+                <i class="bi bi-speedometer2 mr-2 text-blue-600"></i>Dashboard
+            </h1>
+            <p class="text-slate-700">Welcome back! Here's your financial overview</p>
+        </div>
+        <div class="flex gap-3 flex-wrap">
+            <a href="{{ url_for('main.add_income') }}" class="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl text-white font-semibold hover:shadow-lg hover:shadow-green-500/50 transition-all">
+                <i class="bi bi-plus-circle mr-2"></i>Add Income
+            </a>
+            <a href="{{ url_for('main.add_expense') }}" class="px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 rounded-xl text-white font-semibold hover:shadow-lg hover:shadow-red-500/50 transition-all">
+                <i class="bi bi-plus-circle mr-2"></i>Add Expense
+            </a>
+            <button onclick="exportToCSV()" class="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl text-white font-semibold hover:shadow-lg hover:shadow-blue-500/50 transition-all">
+                <i class="bi bi-file-earmark-spreadsheet mr-2"></i>Export CSV
+            </button>
+            <button onclick="exportToPDF()" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl text-white font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all">
+                <i class="bi bi-file-earmark-pdf mr-2"></i>Export PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Budget Alerts Section -->
+    {% if alerts %}
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill text-amber-500"></i>Budget Alerts
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Red Critical Alerts (85%+) -->
+            {% set critical_alerts = alerts|selectattr('type', 'equalto', 'critical')|list %}
+            {% if critical_alerts %}
+            {% for alert in critical_alerts %}
+            <div class="rounded-xl bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-400 p-5 shadow-lg animate-pulse">
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-lg bg-red-600">
+                        <i class="bi bi-exclamation-triangle-fill text-white text-lg"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-red-700">Critical Alert!</h3>
+                        <p class="text-red-600 font-semibold text-sm mt-1">{{ alert.category }} Budget Exceeded</p>
+                        <p class="text-red-600 text-sm mt-2">
+                            <i class="bi bi-exclamation-lg mr-2"></i>{{ alert.message }}
+                        </p>
+                        <div class="mt-3 text-xs text-red-700 bg-red-100 px-3 py-2 rounded-lg">
+                            <strong>Amount:</strong> ₹{{ "%.0f"|format(alert.spent) }} / ₹{{ "%.0f"|format(alert.limit) }} 
+                            ({{ "%.1f"|format(alert.percentage) }}% used)
+                        </div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="flex-shrink-0 text-red-400 hover:text-red-600 text-xl">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- Yellow Warning Alerts (70-85%) -->
+            {% set warning_alerts = alerts|selectattr('type', 'equalto', 'warning')|list %}
+            {% if warning_alerts %}
+            {% for alert in warning_alerts %}
+            <div class="rounded-xl bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-400 p-5 shadow-lg">
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-lg bg-yellow-600">
+                        <i class="bi bi-exclamation-circle-fill text-white text-lg"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-yellow-700">Warning</h3>
+                        <p class="text-yellow-600 font-semibold text-sm mt-1">{{ alert.category }} Budget Alert</p>
+                        <p class="text-yellow-600 text-sm mt-2">
+                            <i class="bi bi-exclamation-lg mr-2"></i>{{ alert.message }}
+                        </p>
+                        <div class="mt-3 text-xs text-yellow-700 bg-yellow-100 px-3 py-2 rounded-lg">
+                            <strong>Amount:</strong> ₹{{ "%.0f"|format(alert.spent) }} / ₹{{ "%.0f"|format(alert.limit) }} 
+                            ({{ "%.1f"|format(alert.percentage) }}% used)
+                        </div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="flex-shrink-0 text-yellow-400 hover:text-yellow-600 text-xl">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Income -->
+        <div class="glass-card rounded-2xl p-6 hover:scale-105 transition-all duration-300 group">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-slate-700 mb-2">Total Income</p>
+                    <h3 class="text-3xl font-bold text-slate-900">₹{{ "%.2f"|format(total_income) }}</h3>
+                </div>
+                <div class="bg-gradient-to-br from-green-500 to-emerald-600 w-14 h-14 rounded-xl flex items-center justify-center group-hover:shadow-lg group-hover:shadow-green-500/50 transition-all">
+                    <i class="bi bi-cash-coin text-2xl text-slate-900"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total Expenses -->
+        <div class="glass-card rounded-2xl p-6 hover:scale-105 transition-all duration-300 group">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-slate-700 mb-2">Total Expenses</p>
+                    <h3 class="text-3xl font-bold text-slate-900">₹{{ "%.2f"|format(total_expense) }}</h3>
+                </div>
+                <div class="bg-gradient-to-br from-red-500 to-pink-600 w-14 h-14 rounded-xl flex items-center justify-center group-hover:shadow-lg group-hover:shadow-red-500/50 transition-all">
+                    <i class="bi bi-graph-down text-2xl text-slate-900"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Balance -->
+        <div class="glass-card rounded-2xl p-6 hover:scale-105 transition-all duration-300 group">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-slate-700 mb-2">Balance</p>
+                    <h3 class="text-3xl font-bold text-slate-900">₹{{ "%.2f"|format(balance) }}</h3>
+                </div>
+                <div class="bg-gradient-to-br from-indigo-500 to-purple-600 w-14 h-14 rounded-xl flex items-center justify-center group-hover:shadow-lg group-hover:shadow-indigo-500/50 transition-all">
+                    <i class="bi bi-wallet2 text-2xl text-white"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Budget Health -->
+        <div class="glass-card rounded-2xl p-6 hover:scale-105 transition-all duration-300 group">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-slate-700 mb-2">Budget Health</p>
+                    <h3 class="text-3xl font-bold text-slate-900">{{ (100 - (total_expense / total_income * 100) if total_income > 0 else 0)|round|int }}%</h3>
+                </div>
+                <div class="bg-gradient-to-br from-cyan-500 to-blue-600 w-14 h-14 rounded-xl flex items-center justify-center group-hover:shadow-lg group-hover:shadow-cyan-500/50 transition-all">
+                    <i class="bi bi-heart-pulse text-2xl text-white"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Progress Tracking -->
+    <div class="glass-card rounded-2xl p-8 mb-8">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                <i class="bi bi-bullseye text-2xl text-slate-900"></i>
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold text-slate-900">Budget Tracking</h2>
+                <p class="text-slate-700 text-sm">Monitor your spending limits across categories</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for budget in budget_progress %}
+            <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-white to-slate-50 backdrop-blur-xl border {% if budget.status == 'safe' %}border-green-500/30{% elif budget.status == 'caution' %}border-yellow-500/30{% else %}border-red-500/30{% endif %} p-5 transition-all duration-300 group">
+                <div class="relative z-10">
+                    <!-- Category Header -->
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-gradient-to-br {% if budget.status == 'safe' %}from-green-500 to-emerald-600{% elif budget.status == 'caution' %}from-yellow-500 to-amber-600{% else %}from-red-500 to-pink-600{% endif %} flex items-center justify-center">
+                                <i class="bi bi-{% if budget.category == 'Food' %}cup-straw{% elif budget.category == 'Transport' %}car-front{% elif budget.category == 'Entertainment' %}controller{% elif budget.category == 'Shopping' %}bag{% elif budget.category == 'Bills' %}receipt{% elif budget.category == 'Health' %}heart-pulse{% elif budget.category == 'Education' %}book{% else %}tag{% endif %} text-slate-900 text-sm"></i>
+                            </div>
+                            <h3 class="text-base font-bold text-slate-900">{{ budget.category }}</h3>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            {% if budget.percentage >= 85 %}
+                            <i class="bi bi-exclamation-triangle-fill text-red-500 animate-pulse text-lg" title="Critical: 85%+ budget"></i>
+                            {% elif budget.percentage >= 70 %}
+                            <i class="bi bi-exclamation-circle-fill text-yellow-500 animate-pulse text-lg" title="Warning: 70%+ budget"></i>
+                            {% endif %}
+                            <button
+                                type="button"
+                                class="js-open-budget-modal text-xs px-3 py-1.5 rounded-lg border border-slate-200 bg-white/90 hover:bg-slate-50 text-slate-800 font-semibold shadow-sm transition-colors"
+                                data-category="{{ budget.category }}"
+                                data-limit="{{ '%.0f'|format(budget.limit) }}"
+                                data-default-limit="{{ '%.0f'|format(budget.default_limit) }}"
+                                data-is-custom="{{ 1 if budget.is_custom else 0 }}"
+                                data-is-other="{{ 1 if budget.category == 'Other' else 0 }}"
+                            >
+                                <i class="bi bi-pencil-square mr-1"></i>Edit
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Amount Display -->
+                    <div class="mb-3">
+                        <div class="flex items-baseline justify-between mb-1">
+                            <span class="text-2xl font-bold text-slate-900">₹{{ "%.0f"|format(budget.spent) }}</span>
+                            <span class="text-xs text-slate-700">of ₹{{ "%.0f"|format(budget.limit) }}</span>
+                        </div>
+                        <div class="text-xs {% if budget.status == 'safe' %}text-green-400{% elif budget.status == 'caution' %}text-yellow-400{% else %}text-red-400{% endif %}">
+                            {% if budget.remaining > 0 %}
+                                ₹{{ "%.0f"|format(budget.remaining) }} remaining
+                            {% else %}
+                                ₹{{ "%.0f"|format(budget.spent - budget.limit) }} over budget
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="relative">
+                        <div class="w-full bg-slate-300 rounded-full h-2.5 mb-2">
+                            <div class="h-2.5 rounded-full transition-all duration-500 {% if budget.status == 'safe' %}bg-gradient-to-r from-green-500 to-emerald-600{% elif budget.status == 'caution' %}bg-gradient-to-r from-yellow-500 to-amber-600{% else %}bg-gradient-to-r from-red-500 to-pink-600{% endif %}" style="width: {{ "%.1f"|format(budget.percentage) }}%"></div>
+                        </div>
+                        <div class="text-xs font-semibold {% if budget.status == 'safe' %}text-green-400{% elif budget.status == 'caution' %}text-yellow-400{% else %}text-red-400{% endif %}">
+                            {{ "%.1f"|format(budget.percentage) }}% used
+                        </div>
+                    </div>
+
+                    <!-- Status Badge -->
+                    <div class="mt-3">
+                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold {% if budget.status == 'safe' %}bg-green-500/20 text-green-400{% elif budget.status == 'caution' %}bg-yellow-500/20 text-yellow-400{% else %}bg-red-500/20 text-red-400{% endif %}">
+                            <i class="bi bi-{% if budget.status == 'safe' %}check-circle{% elif budget.status == 'caution' %}exclamation-circle{% else %}x-circle{% endif %}"></i>
+                            {% if budget.status == 'safe' %}On Track{% elif budget.status == 'caution' %}Warning (70%){% else %}Critical (85%){% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Animated Background Glow -->
+                <div class="absolute top-0 right-0 w-20 h-20 {% if budget.status == 'safe' %}bg-green-500{% elif budget.status == 'caution' %}bg-yellow-500{% else %}bg-red-500{% endif %}/10 rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-500"></div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Budget Summary -->
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="rounded-lg bg-green-500/10 border border-green-500/30 p-4">
+                <div class="flex items-center gap-3">
+                    <i class="bi bi-check-circle-fill text-2xl text-green-500"></i>
+                    <div>
+                        <p class="text-green-600 font-semibold">{{ budget_progress|selectattr('status', 'equalto', 'safe')|list|length }}</p>
+                        <p class="text-xs text-slate-700">Categories on track</p>
+                    </div>
+                </div>
+            </div>
+            <div class="rounded-lg bg-yellow-500/10 border border-yellow-500/30 p-4">
+                <div class="flex items-center gap-3">
+                    <i class="bi bi-exclamation-circle-fill text-2xl text-yellow-500"></i>
+                    <div>
+                        <p class="text-yellow-600 font-semibold">{{ budget_progress|selectattr('status', 'equalto', 'caution')|list|length }}</p>
+                        <p class="text-xs text-slate-700">Categories need attention</p>
+                    </div>
+                </div>
+            </div>
+            <div class="rounded-lg bg-red-500/10 border border-red-500/30 p-4">
+                <div class="flex items-center gap-3">
+                    <i class="bi bi-x-circle-fill text-2xl text-red-500"></i>
+                    <div>
+                        <p class="text-red-600 font-semibold">{{ budget_progress|selectattr('status', 'equalto', 'danger')|list|length }}</p>
+                        <p class="text-xs text-slate-700">Categories over budget</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts and Recent Expenses -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Expense Breakdown Chart -->
+        <div class="glass-card rounded-2xl p-6 border border-slate-200 bg-white/90">
+            <h5 class="text-xl font-bold text-slate-900 mb-4">
+                <i class="bi bi-pie-chart mr-2 text-indigo-600"></i>Expense Breakdown
+            </h5>
+            {% if category_labels %}
+                <div class="relative h-[360px]">
+                    <canvas id="categoryChart" 
+                            data-labels='{{ category_labels|tojson|safe }}' 
+                            data-values='{{ category_data|tojson|safe }}'></canvas>
+                </div>
+            {% else %}
+                <p class="text-slate-700 text-center py-12">No expense data yet</p>
+            {% endif %}
+        </div>
+
+        <!-- Recent Expenses -->
+        <div class="glass-card rounded-2xl p-6 border border-slate-200 bg-white/90">
+            <h5 class="text-xl font-bold text-slate-900 mb-4">
+                <i class="bi bi-list-check mr-2 text-indigo-600"></i>Recent Expenses
+            </h5>
+            {% if recent_expenses %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-slate-200">
+                                <th class="text-left text-slate-700 pb-3">Category</th>
+                                <th class="text-left text-slate-700 pb-3">Amount</th>
+                                <th class="text-left text-slate-700 pb-3">Date</th>
+                                <th class="text-left text-slate-700 pb-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in recent_expenses %}
+                                <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                    <td class="py-3">
+                                        <span class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
+                                            {{ expense.category }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 text-slate-700">₹{{ "%.2f"|format(expense.amount) }}</td>
+                                    <td class="py-3 text-slate-700 text-sm">{{ expense.date.strftime('%b %d, %Y') }}</td>
+                                    <td class="py-3 text-slate-700">
+                                        <div class="flex gap-2">
+                                            <a href="{{ url_for('main.edit_expense', expense_id=expense.id) }}" class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-all text-sm relative group">
+                                                <i class="bi bi-pencil-square"></i>
+                                                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white text-slate-900 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Edit</span>
+                                            </a>
+                                            <form method="POST" action="{{ url_for('main.delete_expense', expense_id=expense.id) }}" style="display: inline;" onsubmit="return confirm('Delete this expense?')">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="px-3 py-1 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-all text-sm relative group">
+                                                    <i class="bi bi-trash"></i>
+                                                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white text-slate-900 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Delete</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <a href="{{ url_for('main.dashboard') }}" class="mt-4 inline-block px-6 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-all font-medium">
+                    View All Expenses
+                </a>
+            {% else %}
+                <p class="text-slate-700 text-center py-12">No expenses yet</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Advanced Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Expense Trend (Line Chart) -->
+        <div class="glass-card rounded-2xl p-6 border border-slate-200 bg-white/90">
+            <h5 class="text-xl font-bold text-slate-900 mb-4">
+                <i class="bi bi-graph-up mr-2 text-cyan-600"></i>30-Day Expense Trend
+            </h5>
+            {% if expense_trend_data %}
+                <div class="relative h-[300px]">
+                    <canvas id="trendChart"
+                            data-labels='{{ expense_trend_labels|tojson|safe }}'
+                            data-values='{{ expense_trend_data|tojson|safe }}'></canvas>
+                </div>
+            {% else %}
+                <p class="text-slate-700 text-center py-12">No trend data available</p>
+            {% endif %}
+        </div>
+
+        <!-- Income vs Expense Comparison (Bar Chart) -->
+        <div class="glass-card rounded-2xl p-6 border border-slate-200 bg-white/90">
+            <h5 class="text-xl font-bold text-slate-900 mb-4">
+                <i class="bi bi-bar-chart mr-2 text-purple-600"></i>Income vs Expense (6 Months)
+            </h5>
+            {% if monthly_labels %}
+                <div class="relative h-[300px]">
+                    <canvas id="comparisonChart"
+                            data-labels='{{ monthly_labels|tojson|safe }}'
+                            data-income='{{ monthly_income_data|tojson|safe }}'
+                            data-expense='{{ monthly_expense_data|tojson|safe }}'></canvas>
+                </div>
+            {% else %}
+                <p class="text-slate-700 text-center py-12">No comparison data available</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- AI Insights Section -->
+    {% if insights %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="glass-card rounded-2xl p-6 border border-slate-200 bg-white/90">
+            <h5 class="text-xl font-bold text-slate-900 mb-4">
+                <i class="bi bi-lightbulb mr-2 text-yellow-500"></i>AI Insights
+            </h5>
+            <div class="space-y-3">
+                {% for insight in insights %}
+                    <div class="bg-indigo-50 border-l-4 border-indigo-500 rounded-lg p-4">
+                        <p class="text-slate-700">{{ insight }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6 border border-slate-200 bg-white/90">
+            <h5 class="text-xl font-bold text-slate-900 mb-4">
+                <i class="bi bi-robot mr-2 text-purple-600"></i>AI Suggestions
+            </h5>
+            <div class="bg-purple-50 border-l-4 border-purple-500 rounded-lg p-4">
+                <p class="text-slate-700 leading-7 whitespace-pre-line">{{ ai_suggestions|replace('- **', '• ')|replace('**', '')|replace('*', '') }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Next Month Prediction -->
+    <div class="glass-card rounded-2xl p-6 mb-8">
+        <h5 class="text-xl font-bold text-slate-900 mb-4">
+            <i class="bi bi-graph-up mr-2 text-accent-cyan"></i>Next Month Prediction
+        </h5>
+        {% if predictions.get('message') %}
+            <div class="bg-accent-cyan/10 border-l-4 border-accent-cyan rounded-lg p-4 space-y-2">
+                <p class="text-slate-700"><strong>{{ predictions.message }}</strong></p>
+                {% if predictions.get('daily_average') > 0 %}
+                    <p class="text-slate-700">Daily average: <strong class="text-accent-cyan">₹{{ "%.2f"|format(predictions.daily_average) }}</strong></p>
+                {% endif %}
+                {% if predictions.get('high_spending_days') %}
+                    <p class="text-slate-700">High spending days: <strong class="text-accent-cyan">{{ predictions.high_spending_days|join(', ') }}</strong></p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Stock Watchlist -->
+    <div class="glass-card rounded-2xl p-6 mb-8">
+        <div class="flex justify-between items-center mb-6">
+            <h5 class="text-xl font-bold text-slate-900">
+                <i class="bi bi-star-fill mr-2 text-yellow-500"></i>My Stock Watchlist
+            </h5>
+            <a href="{{ url_for('main.stock_search') }}" class="px-4 py-2 bg-gradient-to-r from-primary-500 to-accent-purple rounded-lg text-slate-900 font-semibold hover:shadow-lg hover:shadow-primary-500/50 transition-all">
+                <i class="bi bi-plus mr-2"></i>Add Stock
+            </a>
+        </div>
+        
+        {% if user_watchlist %}
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-dark-border">
+                            <th class="text-left text-slate-700 pb-3">Symbol</th>
+                            <th class="text-left text-slate-700 pb-3">Company</th>
+                            <th class="text-left text-slate-700 pb-3">Sector</th>
+                            <th class="text-left text-slate-700 pb-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stock in user_watchlist %}
+                        <tr class="border-b border-dark-border/50 hover:bg-white transition-colors">
+                            <td class="py-3">
+                                <strong class="text-slate-900">{{ stock.symbol }}</strong>
+                            </td>
+                            <td class="py-3 text-slate-700">{{ stock.name }}</td>
+                            <td class="py-3">
+                                <span class="px-3 py-1 bg-primary-500/20 text-primary-400 rounded-full text-sm">
+                                    {{ stock.sector }}
+                                </span>
+                            </td>
+                            <td class="py-3">
+                                <a href="{{ url_for('main.watchlist') }}" class="px-4 py-1 bg-primary-500/20 text-primary-400 rounded-lg hover:bg-primary-500/30 transition-all">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4">
+                <a href="{{ url_for('main.watchlist') }}" class="inline-block px-6 py-2 bg-primary-500/20 text-primary-400 rounded-lg hover:bg-primary-500/30 transition-all">
+                    <i class="bi bi-star-fill mr-2"></i>View Full Watchlist
+                </a>
+            </div>
+        {% else %}
+            <div class="text-center py-8">
+                <p class="text-slate-700 mb-4">
+                    <i class="bi bi-search text-3xl mb-2 block"></i>
+                    No stocks in your watchlist yet.
+                </p>
+                <a href="{{ url_for('main.stock_search') }}" class="inline-block px-6 py-2 bg-gradient-to-r from-primary-500 to-accent-purple rounded-lg text-slate-900 font-semibold hover:shadow-lg hover:shadow-primary-500/50 transition-all">
+                    Start Searching →
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="glass-card rounded-2xl p-6">
+        <h5 class="text-xl font-bold text-slate-900 mb-6">
+            <i class="bi bi-lightning mr-2 text-yellow-500"></i>Quick Actions
+        </h5>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <a href="{{ url_for('main.add_expense') }}" class="px-6 py-3 border-2 border-red-500 text-red-400 rounded-xl font-semibold hover:bg-red-500/10 transition-all text-center">
+                <i class="bi bi-dash-circle mr-2"></i>Add Expense
+            </a>
+            <a href="{{ url_for('main.add_income') }}" class="px-6 py-3 border-2 border-green-500 text-green-400 rounded-xl font-semibold hover:bg-green-500/10 transition-all text-center">
+                <i class="bi bi-plus-circle mr-2"></i>Add Income
+            </a>
+            <a href="{{ url_for('main.stock_search') }}" class="px-6 py-3 border-2 border-yellow-500 text-yellow-400 rounded-xl font-semibold hover:bg-yellow-500/10 transition-all text-center">
+                <i class="bi bi-search mr-2"></i>Stock Search
+            </a>
+            <a href="{{ url_for('main.investment_coach') }}" class="px-6 py-3 border-2 border-purple-500 text-purple-400 rounded-xl font-semibold hover:bg-purple-500/10 transition-all text-center">
+                <i class="bi bi-robot mr-2"></i>AI Coach
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="px-6 py-3 border-2 border-gray-500 text-slate-700 rounded-xl font-semibold hover:bg-gray-500/10 transition-all text-center">
+                <i class="bi bi-box-arrow-right mr-2"></i>Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- Budget Edit Modal -->
+    <div id="budgetEditModal" class="fixed inset-0 z-[9999] hidden items-center justify-center px-4">
+        <div id="budgetEditBackdrop" class="absolute inset-0 bg-slate-900/55 backdrop-blur-[1px]"></div>
+        <div class="relative z-10 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+            <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Update Budget</p>
+                    <h3 id="budgetEditTitle" class="mt-1 text-lg font-bold text-slate-900">Set category budget</h3>
+                </div>
+                <button id="budgetEditCloseBtn" type="button" class="rounded-lg border border-slate-200 px-2 py-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700" aria-label="Close budget editor">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <form method="POST" action="{{ url_for('main.update_category_budget') }}" class="mt-4 space-y-3">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="category" id="budgetEditCategory" value="">
+
+                <label for="budgetEditAmount" class="block text-sm font-semibold text-slate-700">Budget amount</label>
+                <input
+                    id="budgetEditAmount"
+                    type="number"
+                    name="amount"
+                    min="1"
+                    step="1"
+                    value=""
+                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-base text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                    required
+                >
+
+                <div id="budgetEditMeta" class="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-600 leading-5"></div>
+                <div id="budgetEditHint" class="hidden rounded-xl bg-blue-50 px-3 py-2 text-xs text-blue-700 leading-5">
+                    Saving here will auto-adjust Other budget.
+                </div>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <button type="submit" name="action" value="save" class="flex-1 rounded-xl bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700">Save</button>
+                    <button type="submit" name="action" value="reset" class="flex-1 rounded-xl bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-300">Reset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Budget modal behavior
+    const budgetModal = document.getElementById('budgetEditModal');
+    const budgetModalBackdrop = document.getElementById('budgetEditBackdrop');
+    const budgetModalClose = document.getElementById('budgetEditCloseBtn');
+    const budgetEditTitle = document.getElementById('budgetEditTitle');
+    const budgetEditCategory = document.getElementById('budgetEditCategory');
+    const budgetEditAmount = document.getElementById('budgetEditAmount');
+    const budgetEditMeta = document.getElementById('budgetEditMeta');
+    const budgetEditHint = document.getElementById('budgetEditHint');
+
+    function openBudgetModal(button) {
+        if (!budgetModal) return;
+        const category = button.dataset.category || 'Category';
+        const limit = button.dataset.limit || '';
+        const defaultLimit = button.dataset.defaultLimit || '';
+        const isCustom = button.dataset.isCustom === '1';
+        const isOther = button.dataset.isOther === '1';
+
+        budgetEditTitle.textContent = `Set ${category} budget`;
+        budgetEditCategory.value = category;
+        budgetEditAmount.value = limit;
+        budgetEditMeta.textContent = isCustom
+            ? 'Custom budget active'
+            : `Auto budget: Rs ${defaultLimit}`;
+
+        if (isOther) {
+            budgetEditHint.classList.add('hidden');
+        } else {
+            budgetEditHint.classList.remove('hidden');
+        }
+
+        budgetModal.classList.remove('hidden');
+        budgetModal.classList.add('flex');
+        document.body.classList.add('overflow-hidden');
+        setTimeout(() => budgetEditAmount.focus(), 50);
+    }
+
+    function closeBudgetModal() {
+        if (!budgetModal) return;
+        budgetModal.classList.add('hidden');
+        budgetModal.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    document.querySelectorAll('.js-open-budget-modal').forEach((button) => {
+        button.addEventListener('click', () => openBudgetModal(button));
+    });
+
+    if (budgetModalBackdrop) {
+        budgetModalBackdrop.addEventListener('click', closeBudgetModal);
+    }
+    if (budgetModalClose) {
+        budgetModalClose.addEventListener('click', closeBudgetModal);
+    }
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeBudgetModal();
+        }
+    });
+
+    // Category Breakdown Chart (Doughnut)
+    const chartCanvas = document.getElementById('categoryChart');
+    if (chartCanvas && chartCanvas.dataset.labels && chartCanvas.dataset.values) {
+        const ctx = chartCanvas.getContext('2d');
+        const categoryLabels = JSON.parse(chartCanvas.dataset.labels);
+        const categoryData = JSON.parse(chartCanvas.dataset.values);
+        
+        const totalCategoryExpense = categoryData.reduce((a, b) => a + b, 0);
+        const centerTextPlugin = {
+            id: 'centerText',
+            afterDraw(chart) {
+                const meta = chart.getDatasetMeta(0);
+                if (!meta || !meta.data || !meta.data.length) return;
+                const centerX = meta.data[0].x;
+                const centerY = meta.data[0].y;
+                const { ctx } = chart;
+                ctx.save();
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#64748b';
+                ctx.font = '600 12px Plus Jakarta Sans';
+                ctx.fillText('Total Spend', centerX, centerY - 10);
+                ctx.fillStyle = '#0f172a';
+                ctx.font = '800 18px Plus Jakarta Sans';
+                ctx.fillText(`₹${totalCategoryExpense.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`, centerX, centerY + 14);
+                ctx.restore();
+            }
+        };
+
+        const categoryChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    data: categoryData,
+                    backgroundColor: [
+                        '#6366f1',
+                        '#a855f7',
+                        '#ec4899',
+                        '#06b6d4',
+                        '#10b981',
+                        '#f59e0b',
+                        '#ef4444'
+                    ],
+                    borderColor: '#ffffff',
+                    borderWidth: 4,
+                    hoverOffset: 14,
+                    borderRadius: 8
+                }]
+            },
+            plugins: [centerTextPlugin],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '62%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#334155',
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            boxWidth: 12,
+                            boxHeight: 12,
+                            padding: 18,
+                            font: {
+                                size: 12,
+                                weight: '600'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#e2e8f0',
+                        borderColor: '#60a5fa',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': ₹' + value.toFixed(2) + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateScale: true,
+                    animateRotate: true,
+                    duration: 1400,
+                    easing: 'easeOutCubic'
+                }
+            }
+        });
+    }
+
+    // Expense Trend Chart (Line)
+    const trendCanvas = document.getElementById('trendChart');
+    if (trendCanvas && trendCanvas.dataset.labels && trendCanvas.dataset.values) {
+        const ctx = trendCanvas.getContext('2d');
+        const trendLabels = JSON.parse(trendCanvas.dataset.labels);
+        const trendData = JSON.parse(trendCanvas.dataset.values);
+        
+        const trendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: trendLabels,
+                datasets: [{
+                    label: 'Daily Expenses',
+                    data: trendData,
+                    borderColor: '#06b6d4',
+                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#06b6d4',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: '#06b6d4',
+                    pointHoverBorderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            color: '#334155',
+                            font: { size: 12, weight: '600' },
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#e2e8f0',
+                        borderColor: '#06b6d4',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                return 'Spent: ₹' + context.parsed.y.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.25)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            callback: function(value) {
+                                return '₹' + value;
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.15)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            maxRotation: 45,
+                            minRotation: 0
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuart'
+                }
+            }
+        });
+    }
+
+    // Income vs Expense Comparison Chart (Bar)
+    const comparisonCanvas = document.getElementById('comparisonChart');
+    if (comparisonCanvas && comparisonCanvas.dataset.labels && comparisonCanvas.dataset.income && comparisonCanvas.dataset.expense) {
+        const ctx = comparisonCanvas.getContext('2d');
+        const comparisonLabels = JSON.parse(comparisonCanvas.dataset.labels);
+        const incomeData = JSON.parse(comparisonCanvas.dataset.income);
+        const expenseData = JSON.parse(comparisonCanvas.dataset.expense);
+        
+        const comparisonChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: comparisonLabels,
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: incomeData,
+                        backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        hoverBackgroundColor: 'rgba(16, 185, 129, 1)'
+                    },
+                    {
+                        label: 'Expense',
+                        data: expenseData,
+                        backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                        borderColor: '#ef4444',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        hoverBackgroundColor: 'rgba(239, 68, 68, 1)'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            color: '#334155',
+                            padding: 15,
+                            font: { size: 12, weight: '600' },
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#e2e8f0',
+                        borderColor: '#6366f1',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ₹' + context.parsed.y.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.25)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            callback: function(value) {
+                                return '₹' + value;
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.15)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#64748b'
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuart'
+                }
+            }
+        });
+    }
+
+    // Export to CSV Function
+    function exportToCSV() {
+        try {
+            const recentExpenses = {{ recent_expenses_json|tojson|safe }};
+            if (!recentExpenses || recentExpenses.length === 0) {
+                showToast('No expense data to export', 'error');
+                return;
+            }
+
+            // Create CSV content
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Date,Category,Description,Amount\n";
+            
+            recentExpenses.forEach(expense => {
+                const date = expense.date || 'N/A';
+                const category = expense.category || 'N/A';
+                const description = (expense.description || 'N/A').replace(/,/g, ';'); // Replace commas
+                const amount = expense.amount || 0;
+                csvContent += `${date},${category},${description},₹${amount}\n`;
+            });
+
+            // Create download link
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `expense_report_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast('CSV exported successfully!', 'success');
+        } catch (error) {
+            console.error('CSV Export Error:', error);
+            showToast('Failed to export CSV: ' + error.message, 'error');
+        }
+    }
+
+    // Export to PDF Function
+    function exportToPDF() {
+        try {
+            if (!window.jspdf) {
+                showToast('PDF library not loaded. Please refresh the page.', 'error');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+        
+        // Title
+        doc.setFontSize(20);
+        doc.setTextColor(99, 102, 241);
+        doc.text('Financial Report', 14, 20);
+        
+        // Date
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 28);
+        
+        // Summary Section
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Summary', 14, 40);
+        
+        doc.setFontSize(11);
+        doc.text(`Total Income: ₹{{ "%.2f"|format(total_income) }}`, 14, 48);
+        doc.text(`Total Expense: ₹{{ "%.2f"|format(total_expense) }}`, 14, 55);
+        doc.text(`Balance: ₹{{ "%.2f"|format(balance) }}`, 14, 62);
+        doc.text(`Budget Health: {{ (100 - (total_expense / total_income * 100) if total_income > 0 else 0)|round|int }}%`, 14, 69);
+        
+        // Recent Expenses Table
+        const recentExpenses = {{ recent_expenses_json|tojson|safe }};
+        if (recentExpenses && recentExpenses.length > 0) {
+            doc.setFontSize(14);
+            doc.text('Recent Expenses', 14, 80);
+            
+            const tableData = recentExpenses.map(expense => [
+                expense.date || 'N/A',
+                expense.category || 'N/A',
+                (expense.description || 'N/A').substring(0, 30),
+                `₹${expense.amount || 0}`
+            ]);
+            
+            doc.autoTable({
+                startY: 85,
+                head: [['Date', 'Category', 'Description', 'Amount']],
+                body: tableData,
+                theme: 'striped',
+                headStyles: {
+                    fillColor: [99, 102, 241],
+                    textColor: 255,
+                    fontSize: 10,
+                    fontStyle: 'bold'
+                },
+                bodyStyles: {
+                    fontSize: 9
+                },
+                alternateRowStyles: {
+                    fillColor: [245, 245, 245]
+                },
+                margin: { top: 85 }
+            });
+        }
+        
+        // Category Breakdown
+        const categoryLabels = {{ category_labels|tojson|safe }};
+        const categoryData = {{ category_data|tojson|safe }};
+        
+        if (categoryLabels && categoryLabels.length > 0) {
+            let yPosition = doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : 150;
+            
+            doc.setFontSize(14);
+            doc.text('Category Breakdown', 14, yPosition);
+            
+            yPosition += 10;
+            const categoryTableData = categoryLabels.map((label, index) => [
+                label,
+                `₹${categoryData[index].toFixed(2)}`,
+                `${((categoryData[index] / categoryData.reduce((a, b) => a + b, 0)) * 100).toFixed(1)}%`
+            ]);
+            
+            doc.autoTable({
+                startY: yPosition,
+                head: [['Category', 'Amount', 'Percentage']],
+                body: categoryTableData,
+                theme: 'striped',
+                headStyles: {
+                    fillColor: [168, 85, 247],
+                    textColor: 255,
+                    fontSize: 10,
+                    fontStyle: 'bold'
+                },
+                bodyStyles: {
+                    fontSize: 9
+                },
+                alternateRowStyles: {
+                    fillColor: [245, 245, 245]
+                }
+            });
+        }
+        
+        // Footer
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(150, 150, 150);
+            doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.getWidth() / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+            doc.text('Wealth Tracker - Powered by AI', 14, doc.internal.pageSize.getHeight() - 10);
+        }
+        
+        // Save PDF
+        doc.save(`financial_report_${new Date().toISOString().split('T')[0]}.pdf`);
+        showToast('PDF exported successfully!', 'success');
+        } catch (error) {
+            console.error('PDF Export Error:', error);
+            showToast('Failed to export PDF: ' + error.message, 'error');
+        }
+    }
+</script>
+{% endblock %}

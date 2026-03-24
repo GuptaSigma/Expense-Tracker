@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Achievements - Wealth Tracker{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-8 px-4">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/achievements.css') }}">
+    <!-- Header -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-yellow-500 to-orange-600 mb-4 animate-pulse">
+                <i class="bi bi-trophy-fill text-4xl text-slate-900"></i>
+            </div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent mb-2">
+                Achievements & Progress
+            </h1>
+            <p class="text-slate-700 text-lg">Track your financial journey milestones</p>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Level Card -->
+            <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-600/20 backdrop-blur-xl border border-purple-500/30 p-6 hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="bi bi-star-fill text-2xl text-purple-400"></i>
+                        <div class="text-purple-400 opacity-80 text-sm font-medium">Level</div>
+                    </div>
+                    <div class="text-4xl font-bold text-slate-900 mb-2">{{ level }}</div>
+                    <div class="w-full bg-purple-900/30 rounded-full h-2 mb-2">
+                        <div class="bg-gradient-to-r from-purple-500 to-pink-600 h-2 rounded-full transition-all duration-500" style="width: {{ level_progress }}%"></div>
+                    </div>
+                    <div class="text-xs text-purple-300/60">{{ total_transactions }}/{{ next_level_transactions }} transactions to Level {{ level + 1 }}</div>
+                </div>
+            </div>
+
+            <!-- Streak Card -->
+            <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500/20 to-red-600/20 backdrop-blur-xl border border-orange-500/30 p-6 hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-orange-500/20">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-orange-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="bi bi-fire text-2xl text-orange-400"></i>
+                        <div class="text-orange-400 opacity-80 text-sm font-medium">Streak</div>
+                    </div>
+                    <div class="text-4xl font-bold text-slate-900 mb-1">{{ streak }}</div>
+                    <div class="text-xs text-orange-300/60">Consecutive days logging</div>
+                </div>
+            </div>
+
+            <!-- Achievements Card -->
+            <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-yellow-500/20 to-amber-600/20 backdrop-blur-xl border border-yellow-500/30 p-6 hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-yellow-500/20">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-yellow-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="bi bi-trophy text-2xl text-yellow-400"></i>
+                        <div class="text-yellow-400 opacity-80 text-sm font-medium">Unlocked</div>
+                    </div>
+                    <div class="text-4xl font-bold text-slate-900 mb-1">{{ unlocked_count }}/{{ achievements|length }}</div>
+                    <div class="text-xs text-yellow-300/60">Achievements earned</div>
+                </div>
+            </div>
+
+            <!-- Balance Card -->
+            <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-500/20 to-emerald-600/20 backdrop-blur-xl border border-green-500/30 p-6 hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-green-500/20">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-green-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="bi bi-wallet2 text-2xl text-green-400"></i>
+                        <div class="text-green-400 opacity-80 text-sm font-medium">Savings Rate</div>
+                    </div>
+                    <div class="text-4xl font-bold text-slate-900 mb-1">{{ "%.1f"|format(savings_rate) }}%</div>
+                    <div class="text-xs text-green-300/60">Of income saved</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievements Grid -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <div class="rounded-2xl bg-gradient-to-br from-white to-slate-50 backdrop-blur-xl border border-slate-200/50 p-8">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-amber-600 flex items-center justify-center">
+                    <i class="bi bi-award text-2xl text-slate-900"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900">Your Achievements</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for achievement in achievements %}
+                <div class="achievement-card group relative overflow-hidden rounded-2xl bg-gradient-to-br {{ achievement.color }}/10 backdrop-blur-xl border {{ achievement.color.replace('from-', 'border-').split()[0] }}/30 p-6 {% if achievement.unlocked %}hover:scale-105{% else %}opacity-50{% endif %} transition-all duration-300">
+                    <div class="relative z-10">
+                        <!-- Achievement Icon -->
+                        <div class="w-16 h-16 rounded-full bg-gradient-to-br {{ achievement.color }} flex items-center justify-center mb-4 mx-auto {% if achievement.unlocked %}animate-pulse{% endif %}">
+                            <i class="bi {{ achievement.icon }} text-3xl text-slate-900"></i>
+                        </div>
+
+                        <!-- Achievement Info -->
+                        <div class="text-center">
+                            <h3 class="text-lg font-bold text-slate-900 mb-2">{{ achievement.name }}</h3>
+                            <p class="text-sm text-slate-700 mb-4">{{ achievement.description }}</p>
+
+                            <!-- Progress Bar -->
+                            <div class="w-full bg-gray-700/30 rounded-full h-2 mb-2">
+                                <div class="bg-gradient-to-r {{ achievement.color }} h-2 rounded-full transition-all duration-500" style="width: {{ achievement.progress }}%"></div>
+                            </div>
+                            <div class="text-xs {% if achievement.unlocked %}text-green-400{% else %}text-slate-600{% endif %}">
+                                {% if achievement.unlocked %}
+                                    <i class="bi bi-check-circle-fill"></i> Unlocked!
+                                {% else %}
+                                    {{ "%.0f"|format(achievement.progress) }}% Complete
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Locked Overlay -->
+                    {% if not achievement.unlocked %}
+                    <div class="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm">
+                        <i class="bi bi-lock-fill text-4xl text-slate-600"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Rewards Section -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <div class="rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur-xl border border-indigo-500/30 p-8">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                    <i class="bi bi-gift text-2xl text-slate-900"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900">Rewards & Benefits</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="p-6 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 border border-blue-500/30">
+                    <div class="text-4xl mb-3">🎯</div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Level Rewards</h3>
+                    <p class="text-sm text-slate-700">Unlock premium features as you level up</p>
+                </div>
+
+                <div class="p-6 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-600/20 border border-purple-500/30">
+                    <div class="text-4xl mb-3">🏆</div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Achievement Badges</h3>
+                    <p class="text-sm text-slate-700">Display your accomplishments with pride</p>
+                </div>
+
+                <div class="p-6 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-600/20 border border-amber-500/30">
+                    <div class="text-4xl mb-3">💎</div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Exclusive Insights</h3>
+                    <p class="text-sm text-slate-700">Get advanced financial tips and strategies</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Preview -->
+    <div class="max-w-7xl mx-auto">
+        <div class="rounded-2xl bg-gradient-to-br from-white to-slate-50 backdrop-blur-xl border border-slate-200/50 p-8 text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 mb-4">
+                <i class="bi bi-people text-3xl text-slate-900"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-slate-900 mb-2">Leaderboard Coming Soon!</h3>
+            <p class="text-slate-700 mb-6">Compare your progress with other users and climb the rankings</p>
+            <button class="px-6 py-3 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-slate-900 font-semibold hover:scale-105 transition-all duration-300 opacity-50 cursor-not-allowed">
+                <i class="bi bi-trophy"></i> View Rankings (Coming Soon)
+            </button>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/achievements.js') }}"></script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Income - ExpenseTracker AI</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/edit_income.css') }}">
+</head>
+<body>
+<div class="income-container">
+    <div class="income-card">
+        <div class="income-header">
+            <div class="income-icon-wrapper">
+                <div class="income-icon">✏️</div>
+            </div>
+            <h1>Edit Income</h1>
+            <p>Update your income details</p>
+        </div>
+
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            <span>You're editing an existing income. Make changes and save!</span>
+        </div>
+
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <!-- Amount Field -->
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="bi bi-cash-coin"></i> Amount (₹)
+                </label>
+                <input type="number" step="0.01" name="amount" class="form-control" 
+                       value="{{ income.amount }}" placeholder="Enter income amount" required>
+            </div>
+
+            <!-- Source Field -->
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="bi bi-briefcase"></i> Income Source
+                </label>
+                <select name="source" class="form-select" required>
+                    <option value="">🎯 Select your income source</option>
+                    <option value="Salary" {% if income.source == 'Salary' %}selected{% endif %}>💼 Salary / Job</option>
+                    <option value="Freelance" {% if income.source == 'Freelance' %}selected{% endif %}>💻 Freelance / Consulting</option>
+                    <option value="Business" {% if income.source == 'Business' %}selected{% endif %}>🏢 Business Income</option>
+                    <option value="Investment" {% if income.source == 'Investment' %}selected{% endif %}>📈 Investment Returns</option>
+                    <option value="Bonus" {% if income.source == 'Bonus' %}selected{% endif %}>🎁 Bonus / Commission</option>
+                    <option value="Gift" {% if income.source == 'Gift' %}selected{% endif %}>🎉 Gift / Inheritance</option>
+                    <option value="Other" {% if income.source == 'Other' %}selected{% endif %}>📦 Other Sources</option>
+                </select>
+            </div>
+
+            <!-- Description Field -->
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="bi bi-chat-left-text"></i> Description
+                </label>
+                <textarea name="description" class="form-control" 
+                          placeholder="Add details about this income (optional)...">{{ income.description or '' }}</textarea>
+            </div>
+
+            <!-- Buttons -->
+            <div class="button-group">
+                <button type="submit" class="btn-submit">
+                    <i class="bi bi-check-circle"></i>
+                    <span>Save Changes</span>
+                </button>
+                <a href="{{ url_for('main.dashboard') }}" class="btn-cancel">
+                    <i class="bi bi-x-circle"></i>
+                    <span>Cancel</span>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>
+

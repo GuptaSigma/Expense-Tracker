@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Add Expense{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/add_expense.css') }}">
+
+<div class="expense-container">
+    <div class="expense-card">
+        <div class="expense-header">
+            <div class="expense-icon">💰</div>
+            <h1>Add Expense</h1>
+            <p>Track your spending wisely</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('main.add_expense') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <!-- Amount Field -->
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-currency-rupee"></i> Amount</label>
+                <div class="input-group">
+                    <i class="bi bi-wallet2 input-icon"></i>
+                    <input type="number" step="0.01" name="amount" class="form-control" 
+                           placeholder="Enter amount" required>
+                </div>
+            </div>
+
+            <!-- Category Field -->
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-tag"></i> Category</label>
+                <select name="category" class="form-select" required>
+                    <option value="">Select a category</option>
+                    <option value="Food">🍔 Food & Dining</option>
+                    <option value="Transport">🚗 Transport & Travel</option>
+                    <option value="Shopping">🛍️ Shopping</option>
+                    <option value="Entertainment">🎮 Entertainment</option>
+                    <option value="Bills">📄 Bills & Utilities</option>
+                    <option value="Healthcare">🏥 Healthcare</option>
+                    <option value="Education">📚 Education</option>
+                    <option value="Other">📦 Others</option>
+                </select>
+            </div>
+
+            <!-- Description Field -->
+            <div class="form-group">
+                <label class="form-label"><i class="bi bi-chat-left-text"></i> Description</label>
+                <textarea name="description" class="form-control" 
+                          placeholder="What was this expense for? (Optional)"></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn-submit">
+                <i class="bi bi-check-circle"></i>
+                Add Expense
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
