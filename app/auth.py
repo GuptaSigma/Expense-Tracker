@@ -46,6 +46,13 @@ def generate_unique_username(name):
         counter += 1
 
 
+def clear_google_oauth_state():
+    """Remove stale Authlib state entries before starting a fresh OAuth flow."""
+    stale_keys = [key for key in session.keys() if key.startswith('_state_google_')]
+    for key in stale_keys:
+        session.pop(key, None)
+
+
 @auth.route('/login', methods=['GET', 'POST'])
 @limiter.limit('10 per minute', exempt_when=is_uptimerobot)
 def login():
@@ -234,8 +241,9 @@ def google_login():
         flash('Google authentication is not configured', 'warning')
         return redirect(url_for('auth.login'))
 
+    clear_google_oauth_state()
     google = oauth.google
-    redirect_uri = url_for('auth.google_callback', _external=True)
+    redirect_uri = Config.GOOGLE_REDIRECT_URI or url_for('auth.google_callback', _external=True)
     return google.authorize_redirect(redirect_uri)
 
 
