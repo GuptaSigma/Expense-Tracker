@@ -14,14 +14,13 @@
 
 function doPost(e) {
   try {
-    // Parse incoming JSON data
-    const data = JSON.parse(e.postData.contents);
-    const email = data.email;
-    const otp = data.otp;
-    const username = data.username;
+    const payload = getPayload_(e);
+    const email = String(payload.email || payload.to || payload.recipient || '').trim();
+    const otp = String(payload.otp || '').trim();
+    const username = String(payload.username || payload.name || 'User').trim();
     
     // Validate input
-    if (!email || !otp || !username) {
+    if (!email || !otp) {
       return ContentService.createTextOutput(JSON.stringify({
         success: false,
         error: "Missing required fields"
@@ -109,6 +108,21 @@ If you didn't sign up for this account, please ignore this email.
       success: false,
       error: error.toString()
     })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function getPayload_(e) {
+  const fallback = (e && e.parameter) ? e.parameter : {};
+  const rawBody = e && e.postData && e.postData.contents ? String(e.postData.contents).trim() : '';
+
+  if (!rawBody) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(rawBody);
+  } catch (error) {
+    return fallback;
   }
 }
 

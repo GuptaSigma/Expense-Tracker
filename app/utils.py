@@ -16,17 +16,33 @@ def send_otp_email(email, otp, username):
     if Config.OTP_DEV_MODE:
         print(f"🔐 DEV MODE - OTP for {email}: {otp}")
         return True
+
+    normalized_email = (email or '').strip().lower()
+    normalized_username = (username or '').strip()
+    normalized_otp = str(otp or '').strip()
+
+    if not normalized_email or '@' not in normalized_email:
+        print(f"❌ OTP email skipped: invalid recipient '{email}'")
+        return False
+
+    if not normalized_username or not normalized_otp:
+        print("❌ OTP email skipped: missing username or OTP")
+        return False
     
     # Try Google Apps Script first (if configured)
     if Config.APPS_SCRIPT_URL:
         try:
+            payload = {
+                "email": normalized_email,
+                "to": normalized_email,
+                "recipient": normalized_email,
+                "otp": normalized_otp,
+                "username": normalized_username,
+                "name": normalized_username,
+            }
             response = requests.post(
                 Config.APPS_SCRIPT_URL,
-                json={
-                    "email": email,
-                    "otp": otp,
-                    "username": username
-                },
+                json=payload,
                 timeout=15
             )
             
@@ -38,7 +54,7 @@ def send_otp_email(email, otp, username):
                 try:
                     result = response.json()
                     if result.get('success'):
-                        print(f"✅ Apps Script: OTP sent to {email}")
+                        print(f"✅ Apps Script: OTP sent to {normalized_email}")
                         return True
                     else:
                         print(f"❌ Apps Script error: {result.get('error', 'Unknown')}")
@@ -91,12 +107,12 @@ def send_otp_email(email, otp, username):
             
             msg = Message(
                 subject=subject,
-                recipients=[email],
+                recipients=[normalized_email],
                 html=html_body,
                 sender=Config.MAIL_DEFAULT_SENDER
             )
             mail.send(msg)
-            print(f"✅ Gmail SMTP: OTP sent to {email}")
+            print(f"✅ Gmail SMTP: OTP sent to {normalized_email}")
             return True
         except Exception as e:
             print(f"❌ Gmail SMTP error: {str(e)}")
@@ -145,14 +161,14 @@ def send_otp_email(email, otp, username):
             },
             json={
                 "from": Config.RESEND_FROM_EMAIL,
-                "to": [email],
+                "to": [normalized_email],
                 "subject": subject,
                 "html": html_body,
             },
             timeout=Config.RESEND_TIMEOUT,
         )
         if response.status_code in (200, 201):
-            print(f"✅ Resend: OTP sent to {email}")
+            print(f"✅ Resend: OTP sent to {normalized_email}")
             return True
         print(f"❌ Resend API error: HTTP {response.status_code}")
         return False

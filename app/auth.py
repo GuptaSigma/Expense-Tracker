@@ -12,6 +12,7 @@ import re
 oauth = OAuth()
 
 auth = Blueprint('auth', __name__)
+EMAIL_PATTERN = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
 
 def is_uptimerobot():
@@ -74,6 +75,14 @@ def register():
         username = request.form.get('username', '').strip()
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
+
+        if not username:
+            flash('Username is required', 'warning')
+            return render_template('register.html')
+
+        if not email or not EMAIL_PATTERN.match(email):
+            flash('Please enter a valid email address', 'warning')
+            return render_template('register.html')
 
         if len(password) < 8:
             flash('Password must be at least 8 characters long', 'warning')
