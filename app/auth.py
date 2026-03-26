@@ -4,6 +4,7 @@ from app.models import User
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from authlib.integrations.flask_client import OAuth
+from authlib.integrations.base_client.errors import MismatchingStateError
 from config import Config
 from app.utils import generate_otp, send_otp_email, get_otp_expiry_time
 from datetime import datetime
@@ -246,7 +247,9 @@ def google_login():
 
     clear_google_oauth_state()
     google = oauth.google
-    redirect_uri = Config.GOOGLE_REDIRECT_URI or url_for('auth.google_callback', _external=True)
+    # Always use current request host for callback URL so state/session cookie
+    # is validated on the same domain that initiated the OAuth flow.
+    redirect_uri = url_for('auth.google_callback', _external=True, _scheme='https')
     return google.authorize_redirect(redirect_uri)
 
 
@@ -310,6 +313,10 @@ def google_callback():
         flash(f'Welcome {user.username.upper()}!', 'success')
         return redirect(url_for('main.dashboard'))
 
+    except MismatchingStateError:
+        clear_google_oauth_state()
+        flash('Google login session expired or domain mismatch detected. Please try again.', 'warning')
+        return redirect(url_for('auth.login'))
     except Exception:
         current_app.logger.exception('Google OAuth callback failed')
         flash('Error during Google authentication. Please try again.', 'danger')

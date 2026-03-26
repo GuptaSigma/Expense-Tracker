@@ -20,7 +20,7 @@ services:
       - key: SESSION_COOKIE_SECURE
         value: "1"
       - key: SESSION_COOKIE_SAMESITE
-        value: Lax
+        value: None
       - key: OTP_DEV_MODE
         value: "0"
       - key: SECRET_KEY
