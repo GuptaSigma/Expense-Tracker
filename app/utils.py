@@ -32,6 +32,11 @@ def send_otp_email(email, otp, username):
     # Try Google Apps Script first (if configured)
     if Config.APPS_SCRIPT_URL:
         try:
+            subject = "Welcome to ExpenseTracker - OTP Verification"
+            welcome_message = (
+                f"Welcome to ExpenseTracker, {normalized_username}! "
+                f"Your OTP is {normalized_otp}. This OTP will expire in 10 minutes."
+            )
             payload = {
                 "email": normalized_email,
                 "to": normalized_email,
@@ -39,6 +44,8 @@ def send_otp_email(email, otp, username):
                 "otp": normalized_otp,
                 "username": normalized_username,
                 "name": normalized_username,
+                "subject": subject,
+                "message": welcome_message,
             }
             response = requests.post(
                 Config.APPS_SCRIPT_URL,
@@ -76,14 +83,15 @@ def send_otp_email(email, otp, username):
     # Try Gmail SMTP (if configured)
     if Config.MAIL_USERNAME and Config.MAIL_PASSWORD:
         try:
-            subject = "ExpenseTracker OTP Verification"
+            subject = "Welcome to ExpenseTracker - OTP Verification"
             html_body = f"""
             <html>
                 <body style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; background-color: #f8fafc; padding: 20px; margin: 0;">
                     <div style="max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                         <div style="text-align: center; margin-bottom: 30px;">
                             <h1 style="color: #0f172a; margin: 0; font-size: 28px;">💰 ExpenseTracker</h1>
-                            <p style="color: #64748b; margin: 10px 0 0 0; font-size: 16px;">Verify Your Email</p>
+                            <p style="color: #64748b; margin: 10px 0 0 0; font-size: 16px;">Welcome to ExpenseTracker!</p>
+                            <p style="color: #64748b; margin: 8px 0 0 0; font-size: 14px;">Verify your email to get started</p>
                         </div>
 
                         <div style="margin-bottom: 30px;">
@@ -132,14 +140,15 @@ def send_otp_email(email, otp, username):
         return False
 
     try:
-        subject = "ExpenseTracker OTP Verification"
+        subject = "Welcome to ExpenseTracker - OTP Verification"
         html_body = f"""
         <html>
             <body style="font-family: 'Plus Jakarta Sans', Arial; background-color: #f8fafc; padding: 20px;">
                 <div style="max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     <div style="text-align: center; margin-bottom: 30px;">
                         <h1 style="color: #0f172a; margin: 0;">ExpenseTracker</h1>
-                        <p style="color: #64748b; margin: 5px 0 0 0;">Verify Your Email</p>
+                        <p style="color: #64748b; margin: 5px 0 0 0;">Welcome to ExpenseTracker!</p>
+                        <p style="color: #64748b; margin: 5px 0 0 0;">Verify your email to continue</p>
                     </div>
 
                     <div style="margin-bottom: 30px;">

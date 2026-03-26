@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 from app import db, limiter
 from app.models import User
 from flask_login import login_user, logout_user, login_required, current_user
@@ -179,8 +179,11 @@ def verify_otp():
             # Clear session
             session.pop('pending_verification_email', None)
 
-            flash('Email verified successfully! Please login.', 'success')
-            return redirect(url_for('auth.login'))
+            # Auto-login after successful verification
+            login_user(user)
+
+            flash('Email verified successfully! Welcome back.', 'success')
+            return redirect(url_for('main.dashboard'))
         else:
             # Debug info for development
             print(f"❌ OTP Mismatch - Expected: {user.otp}, Got: {otp}")
@@ -265,7 +268,12 @@ def google_callback():
 
         google_id = user_info.get('sub')
         email = user_info.get('email')
-        name = user_info.get('name', email.split('@')[0])
+
+        if not email:
+            flash('Google account did not provide an email address.', 'warning')
+            return redirect(url_for('auth.login'))
+
+        name = user_info.get('name') or email.split('@')[0]
 
         # Check if user with this google_id already exists
         user = User.query.filter_by(google_id=google_id).first()
@@ -302,6 +310,7 @@ def google_callback():
         flash(f'Welcome {user.username.upper()}!', 'success')
         return redirect(url_for('main.dashboard'))
 
-    except Exception as e:
-        flash(f'Error during Google authentication: {str(e)}', 'danger')
+    except Exception:
+        current_app.logger.exception('Google OAuth callback failed')
+        flash('Error during Google authentication. Please try again.', 'danger')
         return redirect(url_for('auth.login'))
