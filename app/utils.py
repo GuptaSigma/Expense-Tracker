@@ -53,11 +53,18 @@ def send_otp_email(email, otp, username):
             if response.status_code == 200:
                 try:
                     result = response.json()
-                    if result.get('success'):
+
+                    # Accept both formats used by Apps Script handlers:
+                    # {"status": "success"} and {"success": true}
+                    is_success = (
+                        result.get('success') is True
+                        or str(result.get('status', '')).strip().lower() == 'success'
+                    )
+
+                    if is_success:
                         print(f"✅ Apps Script: OTP sent to {normalized_email}")
                         return True
-                    else:
-                        print(f"❌ Apps Script error: {result.get('error', 'Unknown')}")
+                    print(f"❌ Apps Script error: {result.get('error', result)}")
                 except ValueError as json_error:
                     print(f"❌ Apps Script JSON parse error: {json_error}")
                     print(f"   Raw response: {response.text}")
@@ -114,7 +121,9 @@ def send_otp_email(email, otp, username):
             mail.send(msg)
             print(f"✅ Gmail SMTP: OTP sent to {normalized_email}")
             return True
-        except Exception as e:
+        except BaseException as e:
+            # Gunicorn may surface SMTP socket aborts as SystemExit; never let
+            # OTP email transport failures crash the request worker.
             print(f"❌ Gmail SMTP error: {str(e)}")
     
     # Fallback to Resend API
